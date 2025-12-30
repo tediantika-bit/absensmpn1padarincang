@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import History from './pages/History';
 import Navigation from './components/Navigation';
 import { AuthState, User } from './types';
 
@@ -13,7 +14,6 @@ const App: React.FC = () => {
     isAuthenticated: false,
   });
 
-  // Load user from session storage if exists
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -31,7 +31,13 @@ const App: React.FC = () => {
 
   const logout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('last_username');
     setAuth({ user: null, isAuthenticated: false });
+  };
+
+  const updateUser = (updatedUser: User) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setAuth(prev => ({ ...prev, user: updatedUser }));
   };
 
   return (
@@ -47,8 +53,16 @@ const App: React.FC = () => {
             element={auth.isAuthenticated && auth.user ? <Home user={auth.user} /> : <Navigate to="/login" />} 
           />
           <Route 
+            path="/history" 
+            element={auth.isAuthenticated && auth.user ? <History user={auth.user} /> : <Navigate to="/login" />} 
+          />
+          <Route 
             path="/profile" 
-            element={auth.isAuthenticated && auth.user ? <Profile user={auth.user} onLogout={logout} /> : <Navigate to="/login" />} 
+            element={auth.isAuthenticated && auth.user ? <Profile user={auth.user} onLogout={logout} onUserUpdate={updateUser} /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="*" 
+            element={<Navigate to="/" />} 
           />
         </Routes>
         

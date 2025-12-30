@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, LogOut, Settings, Shield, Info, ChevronRight, School, Briefcase, IdCard, BadgeCheck, RefreshCw } from 'lucide-react';
+import { User as UserIcon, LogOut, School, Briefcase, IdCard, BadgeCheck, RefreshCw } from 'lucide-react';
 import Header from '../components/Header';
 import { User } from '../types';
 
 interface ProfileProps {
   user: User;
   onLogout: () => void;
+  onUserUpdate: (user: User) => void;
 }
 
 const SPREADSHEET_ID = '1MEV7qhqG4SF9eoWyo2KjfSLDndDAqp-MR4iJV5pbg-0';
 const SHEET_NAME = 'Sheet1';
 
-const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
+const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout, onUserUpdate }) => {
   const [user, setUser] = useState<User>(initialUser);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -33,21 +34,30 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
       );
 
       if (foundRow) {
-        const updatedUser = {
+        /**
+         * Pemetaan kolom Spreadsheet:
+         * c[2]: Nama Lengkap
+         * c[3]: NIP
+         * c[4]: Jabatan (Role)
+         * c[5]: Status Pegawai (Employment Status)
+         */
+        const updatedUser: User = {
           ...user,
           name: foundRow.c[2]?.v?.toString() || user.name,
           nip: foundRow.c[3]?.v?.toString() || user.nip,
           role: foundRow.c[4]?.v?.toString() || user.role,
           employmentStatus: foundRow.c[5]?.v?.toString() || user.employmentStatus,
         };
+        
+        // Update local state di halaman ini
         setUser(updatedUser);
-        // Simpan ke localStorage agar dashboard juga terupdate
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Update global state di App.tsx agar Dashboard juga berubah
+        onUserUpdate(updatedUser);
       }
     } catch (err) {
       console.error("Failed to sync profile:", err);
     } finally {
-      // Delay sedikit agar transisi loading terasa smooth
       setTimeout(() => setIsSyncing(false), 500);
     }
   };
@@ -79,12 +89,6 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
     },
   ];
 
-  const menuItems = [
-    { icon: <Shield size={20} />, label: 'Keamanan Akun', color: 'text-slate-400' },
-    { icon: <Settings size={20} />, label: 'Pengaturan App', color: 'text-slate-400' },
-    { icon: <Info size={20} />, label: 'Tentang Aplikasi', color: 'text-slate-400' },
-  ];
-
   return (
     <div className="flex-1 pb-24 overflow-y-auto">
       <Header title="Profil Saya" />
@@ -93,7 +97,7 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
         {isSyncing && (
           <div className="absolute top-4 right-6 flex items-center gap-2 text-[9px] text-indigo-400 font-bold uppercase tracking-widest animate-pulse">
             <RefreshCw size={10} className="animate-spin" />
-            Sinkronisasi...
+            Memperbarui...
           </div>
         )}
 
@@ -113,13 +117,6 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
         <h2 className={`mt-5 text-xl font-bold text-white text-center leading-tight transition-opacity ${isSyncing ? 'opacity-50' : 'opacity-100'}`}>
           {user.name}
         </h2>
-        
-        <div className={`mt-2 flex flex-col items-center gap-2 transition-opacity ${isSyncing ? 'opacity-50' : 'opacity-100'}`}>
-           <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{user.role}</span>
-           <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-             {user.employmentStatus}
-           </span>
-        </div>
       </div>
 
       <div className="px-6 mb-8">
@@ -141,35 +138,18 @@ const Profile: React.FC<ProfileProps> = ({ user: initialUser, onLogout }) => {
         </div>
       </div>
 
-      <div className="px-6 space-y-2">
-        {menuItems.map((item, idx) => (
-          <button 
-            key={idx}
-            className="w-full flex items-center justify-between p-4 bg-slate-900 border border-white/5 rounded-2xl hover:bg-slate-800 transition-colors group"
-          >
-            <div className="flex items-center gap-4">
-              <div className={`p-2 bg-slate-800 rounded-lg ${item.color}`}>
-                {item.icon}
-              </div>
-              <span className="text-slate-300 font-medium text-sm">{item.label}</span>
-            </div>
-            <ChevronRight size={18} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-          </button>
-        ))}
-
-        <div className="pt-6">
-          <button 
-            onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 p-4 bg-red-600/10 border border-red-600/20 text-red-500 font-bold rounded-2xl hover:bg-red-600/20 transition-all"
-          >
-            <LogOut size={20} />
-            Keluar dari Aplikasi
-          </button>
-        </div>
+      <div className="px-6">
+        <button 
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 p-4 bg-red-600/10 border border-red-600/20 text-red-500 font-bold rounded-2xl hover:bg-red-600/20 transition-all shadow-lg active:scale-[0.98]"
+        >
+          <LogOut size={20} />
+          Keluar dari Aplikasi
+        </button>
       </div>
 
       <div className="mt-12 text-center text-slate-600 text-[9px] uppercase tracking-widest pb-8">
-        Sistem Informasi Kepegawaian v2.2.0<br/>SMPN 1 Padarincang
+        Sistem Informasi Kepegawaian v2.2.5<br/>SMPN 1 Padarincang
       </div>
     </div>
   );

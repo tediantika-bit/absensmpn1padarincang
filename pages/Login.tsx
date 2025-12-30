@@ -44,7 +44,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         password: row.c[1]?.v?.toString() || '',
         name: row.c[2]?.v?.toString() || '',
         nip: row.c[3]?.v?.toString() || '',
-        role: row.c[4]?.v?.toString() || 'Guru',
+        role: row.c[4]?.v?.toString() || 'GURU',
         employmentStatus: row.c[5]?.v?.toString() || 'Non-ASN'
       }));
     } catch (err) {
